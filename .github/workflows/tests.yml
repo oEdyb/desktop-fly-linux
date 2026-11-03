@@ -29,5 +29,7 @@ jobs:
         run: PATH=/usr/bin:/bin ./run.sh --simtest
       - name: Run behavior checks
         run: PATH=/usr/bin:/bin ./run.sh --behaviortest
+      - name: Check brain mouse gestures
+        run: /usr/bin/python3 -m unittest desktopfly.tests.test_brain_input
       - name: Build the Python wheel
         run: /usr/bin/python3 -m pip wheel . --no-deps --no-build-isolation --wheel-dir /tmp/wheels

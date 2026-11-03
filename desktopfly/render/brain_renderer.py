@@ -68,6 +68,7 @@ class BrainRenderer:
         )
         self.gf_idx = np.asarray(sim.gf)
         self.angle = 0.0
+        self.tilt = TILT_X
         self.paused = False
         self._flashes: list[list] = []  # [neuron, age, is_gf]
         self._accum = np.zeros((height, width, 3), dtype=np.float32)
@@ -76,7 +77,7 @@ class BrainRenderer:
     # ------------------------------------------------------------ camera
 
     def _matrix(self) -> np.ndarray:
-        return euler_matrix(TILT_X, self.angle, 0.0)
+        return euler_matrix(self.tilt, self.angle, 0.0)
 
     def _project(self, pts: np.ndarray, matrix: np.ndarray):
         """World -> screen. Returns (x, y, depth, visible-mask)."""

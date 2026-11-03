@@ -126,7 +126,13 @@ fiber). FlyWire v783 *does* contain **334 gustatory neurons**, but scanning all
 circuit neurons** — they project into SEZ feeding circuitry instead. A genuine
 sugar pathway would mean extracting a second circuit, not extending this one.
 
-**The brain window is interactive**: hovering pauses the rotation; clicking a
+**The brain window is interactive**: drag with the left mouse button to rotate
+the brain horizontally and vertically; release without dragging to stimulate.
+On KDE Wayland, a temporary KWin script forwards cursor coordinates to the app
+so the fly can see cursor approaches over native Wayland windows. The script
+is unloaded on normal exit; no desktop input is intercepted.
+
+Brain controls: hovering pauses the rotation; clicking a
 region stimulates the ~60 nearest circuit neurons for 400 ms. The fly's reaction
 is whatever the real network does downstream — click the Giant Fiber and it
 escapes, click DNg11 and it grooms.

@@ -44,10 +44,16 @@ class BrainWindow:
         events.add(self.image)
         events.add_events(
             Gdk.EventMask.BUTTON_PRESS_MASK
+            | Gdk.EventMask.BUTTON_RELEASE_MASK
+            | Gdk.EventMask.POINTER_MOTION_MASK
             | Gdk.EventMask.ENTER_NOTIFY_MASK
             | Gdk.EventMask.LEAVE_NOTIFY_MASK
         )
-        events.connect("button-press-event", self._on_click)
+        events.connect("button-press-event", self._on_press)
+        events.connect("button-release-event", self._on_release)
+        events.connect("motion-notify-event", self._on_motion)
+        self._press = None
+        self._dragged = False
         events.connect("enter-notify-event", self._on_enter)
         events.connect("leave-notify-event", self._on_leave)
         overlay.add(events)
@@ -65,6 +71,7 @@ class BrainWindow:
         )
         ctx.add_provider(provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
         overlay.add_overlay(self.label)
+        overlay.set_overlay_pass_through(self.label, True)
         self.win.add(overlay)
         self._label_timer = None
         self._visible = False
@@ -85,6 +92,34 @@ class BrainWindow:
     def _on_leave(self, *_):
         self.renderer.paused = False
         return False
+
+    def _on_press(self, _widget, event):
+        if event.button != 1:
+            return False
+        self._press = (event.x, event.y, self.renderer.angle, self.renderer.tilt)
+        self._dragged = False
+        return True
+
+    def _on_motion(self, _widget, event):
+        if self._press is None:
+            return False
+        x, y, angle, tilt = self._press
+        dx, dy = event.x - x, event.y - y
+        if dx * dx + dy * dy > 25:
+            self._dragged = True
+        if self._dragged:
+            self.renderer.angle = angle + dx * 0.01
+            self.renderer.tilt = max(-1.5, min(1.5, tilt + dy * 0.01))
+        return True
+
+    def _on_release(self, widget, event):
+        if event.button != 1 or self._press is None:
+            return False
+        self._on_motion(widget, event)
+        self._press = None
+        if not self._dragged:
+            return self._on_click(widget, event)
+        return True
 
     def _on_click(self, _widget, event):
         picked, _anchor = self.renderer.nearest_neurons(event.x, event.y)

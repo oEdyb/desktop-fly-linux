@@ -230,8 +230,24 @@ def monitors() -> list[dict]:
     return out
 
 
+_kde_pointer = None
+_pointer_checked = False
+
+
 def pointer_position() -> tuple[int, int]:
-    """Global cursor position. Works under XWayland for the X11 pointer."""
+    global _kde_pointer, _pointer_checked
+    if not _pointer_checked:
+        _pointer_checked = True
+        import os
+        if os.environ.get("XDG_SESSION_TYPE") == "wayland" and "KDE" in os.environ.get("XDG_CURRENT_DESKTOP", ""):
+            from .kde_pointer import KDEPointer
+            try:
+                _kde_pointer = KDEPointer()
+            except Exception as error:
+                import warnings
+                warnings.warn(f"KDE cursor bridge unavailable; XWayland cursor only: {error}")
+    if _kde_pointer is not None and _kde_pointer.position is not None:
+        return _kde_pointer.position
     display = Gdk.Display.get_default()
     seat = display.get_default_seat()
     _screen, x, y = seat.get_pointer().get_position()
