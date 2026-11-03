@@ -23,7 +23,8 @@ GF, DNp09 and MDN buttons; cursor escape from a grounded state; Cut preventing
 cursor takeoff; GF Bypass while Cut remains active; press/mid/drop screenshots
 for Food, Bitter and Smell; food-driven MN9 feeding with the proboscis extended;
 bitter snapping onto Food and suppressing feeding; ORN_DM1/DM1_lPN odor activity;
-rapid zigzag drags across the native Wayland window; right-click removal of each
+grabbing and removing Food while the feeding fly overlaps it; edge drops staying
+reachable; rapid zigzag drags across the native Wayland window; right-click removal of each
 item; and Reset environment clearing all items and neural state.
 
 The Walk check requires walking with speed above 35, rather than only a DNp09
@@ -42,3 +43,17 @@ observation inside every other application.
 Automated checks: unit suite including Brian2 parity, `--simtest`, all 21
 `--behaviortest` checks, and `--sensorytest --seed 42`. The sensory probe retains
 66 MN9 spikes for sugar, zero for sugar+bitter, and zero with MN9 inputs cut.
+
+Review caught an overlap gap in the initial sweep: the fly's motion-only hit area
+could hide interactive items underneath it. Hit testing now selects draggable or
+clickable entries, and real mouse checks grab and remove Food during feeding.
+Off-screen releases are clamped to a 15 px margin on the source monitor; in-bounds
+motion and release preserve the original grip. Native lifecycle regression checks
+cover hit testing, final release motion, cancellation, destruction during a grab,
+and restoration of the small input region.
+
+A separate private KWin Wayland compositor with internal XWayland also passed
+press/mid/drop checks for all three items, plus rapid zigzag drags and release
+over a native Wayland window. Evidence: `artifacts/kde-qa/` and
+[kde-verification.json](kde-verification.json). This exercises the GTK3 grab path,
+rather than treating the outer KWin video host as a KDE application test.

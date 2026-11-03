@@ -147,7 +147,7 @@ class Scene:
     def hit(self, x, y):
         for key, entry in reversed(self.entries.items()):
             radius = entry["radius"]
-            if entry["visible"] and radius:
+            if entry["visible"] and radius and (entry["drag"] or entry["click"]):
                 dx = x - entry["x"] - entry["width"] / 2
                 dy = y - entry["y"] - entry["height"] / 2
                 if abs(dx) <= radius and abs(dy) <= radius:

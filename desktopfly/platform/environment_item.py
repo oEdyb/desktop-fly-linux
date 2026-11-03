@@ -36,6 +36,9 @@ class EnvironmentItem:
         self.draw(force=True)
 
     def finish_drag(self):
+        m = self.monitor
+        self.drop.x = min(m["width"] / 2 - 15, max(-m["width"] / 2 + 15, self.drop.x))
+        self.drop.y = min(m["height"] / 2 - 15, max(-m["height"] / 2 + 15, self.drop.y))
         if self.on_drop:
             self.on_drop(self.drop)
         if self.preview:

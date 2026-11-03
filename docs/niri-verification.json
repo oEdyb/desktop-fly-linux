@@ -113,6 +113,30 @@
       ]
     },
     {
+      "feature": "Food can be grabbed under the fly",
+      "pass": true,
+      "evidence": [
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/08-under-fly-press.png",
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/08-under-fly-mid.png",
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/08-under-fly-drop.png"
+      ]
+    },
+    {
+      "feature": "Food can be removed under the fly",
+      "pass": true,
+      "evidence": [
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/08-remove-under-feeding-fly.png"
+      ]
+    },
+    {
+      "feature": "Food feeding after replacement",
+      "pass": true,
+      "evidence": [
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/08-food-feeding-press.png",
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/08-food-feeding.png"
+      ]
+    },
+    {
       "feature": "Bitter snaps and stops feeding",
       "pass": true,
       "evidence": [
@@ -151,6 +175,16 @@
       ]
     },
     {
+      "feature": "Edge drops stay reachable",
+      "pass": true,
+      "evidence": [
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/12-edge-drop-press.png",
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/12-edge-drop-mid.png",
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/12-edge-drop-drop.png",
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/12-edge-item-remains-removable.png"
+      ]
+    },
+    {
       "feature": "Reset clears items and neural state",
       "pass": true,
       "evidence": [
@@ -160,13 +194,13 @@
     }
   ],
   "video": {
-    "frames": 658,
-    "actual_seconds": 82.32795229397016,
+    "frames": 800,
+    "actual_seconds": 100.11524742899928,
     "nominal_fps": 8,
     "compositor": "Niri nested in private KWin; full actual viewport"
   },
   "automated": {
-    "unit_tests": 19,
+    "unit_tests": 21,
     "behavior_checks": 21,
     "simtest": true,
     "sensorytest": true

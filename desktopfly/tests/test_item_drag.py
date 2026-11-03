@@ -4,6 +4,7 @@ from unittest.mock import Mock, patch
 
 from desktopfly.app import DesktopFly
 from desktopfly.platform.gtkcompat import Gdk
+from desktopfly.platform.environment_item import EnvironmentItem
 from desktopfly.platform.item_drag import ItemDrag
 from desktopfly.platform.niri_coordinates import NiriCoordinates
 from desktopfly.world.environment import Source
@@ -67,3 +68,19 @@ class NiriCoordinatesTest(unittest.TestCase):
         coords.workspaces = [{"id": 2, "output": "DP-3"}]
         coords.outputs = {"DP-3": {"logical": {"x": 2560, "y": 0}}}
         self.assertEqual(coords.origin(), (2664, 56))
+
+
+class DropBoundsTest(unittest.TestCase):
+    def test_offscreen_release_is_reachable_before_snapping(self):
+        item = EnvironmentItem.__new__(EnvironmentItem)
+        item.monitor = {"width": 1920, "height": 1080}
+        item.drop = Source(2000, -1000, "bitter")
+        item.preview = None
+        item.draw = Mock()
+        positions = []
+        item.on_drop = lambda drop: positions.append((drop.x, drop.y))
+        item.finish_drag()
+        self.assertEqual(positions, [(945, -525)])
+        item.drop.x, item.drop.y = 123, 234
+        item.finish_drag()
+        self.assertEqual(positions[-1], (123, 234))

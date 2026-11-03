@@ -1,0 +1,41 @@
+{
+  "compositor": "KWin Wayland with its internal XWayland",
+  "checks": [
+    {
+      "feature": "food KDE press/mid/drop",
+      "pass": true,
+      "evidence": [
+        "/home/olle/dev/desktop-fly-linux/artifacts/kde-qa/food-press.png",
+        "/home/olle/dev/desktop-fly-linux/artifacts/kde-qa/food-mid.png",
+        "/home/olle/dev/desktop-fly-linux/artifacts/kde-qa/food-drop.png"
+      ]
+    },
+    {
+      "feature": "bitter KDE press/mid/drop",
+      "pass": true,
+      "evidence": [
+        "/home/olle/dev/desktop-fly-linux/artifacts/kde-qa/bitter-press.png",
+        "/home/olle/dev/desktop-fly-linux/artifacts/kde-qa/bitter-mid.png",
+        "/home/olle/dev/desktop-fly-linux/artifacts/kde-qa/bitter-drop.png"
+      ]
+    },
+    {
+      "feature": "odor KDE press/mid/drop",
+      "pass": true,
+      "evidence": [
+        "/home/olle/dev/desktop-fly-linux/artifacts/kde-qa/odor-press.png",
+        "/home/olle/dev/desktop-fly-linux/artifacts/kde-qa/odor-mid.png",
+        "/home/olle/dev/desktop-fly-linux/artifacts/kde-qa/odor-drop.png"
+      ]
+    },
+    {
+      "feature": "KDE rapid drags release over native Wayland window",
+      "pass": true,
+      "evidence": [
+        "/home/olle/dev/desktop-fly-linux/artifacts/kde-qa/rapid-food.png",
+        "/home/olle/dev/desktop-fly-linux/artifacts/kde-qa/rapid-bitter.png",
+        "/home/olle/dev/desktop-fly-linux/artifacts/kde-qa/rapid-odor.png"
+      ]
+    }
+  ]
+}
