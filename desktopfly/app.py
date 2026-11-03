@@ -251,9 +251,6 @@ class DesktopFly:
 
     def scare_all(self) -> None:
         self._loom_override = 0.6  # a real stimulus into the real circuit
-        for view in self.views[1:]:
-            if view.fly.state is not State.FLYING:
-                view.fly.start_flight(self.bounds)
 
     def next_display(self) -> None:
         if len(self.monitors) < 2:
@@ -313,7 +310,7 @@ class DesktopFly:
             self.sim.stimulate(self.sim.sens, 0.15 + strength * 0.35, 130)
 
     def _compute_loom(self, fly, mouse, dt):
-        """Cursor kinematics -> per-eye looming drive + air puff.
+        """Cursor kinematics -> per-eye visual looming drive.
 
         This is the sensory transduction step; everything downstream of the
         LC4/LPLC2 population is the real connectome.
@@ -338,8 +335,7 @@ class DesktopFly:
         cross_z = f[0] * rd[1] - f[1] * rd[0]  # > 0: threat on the left
         lw = clampf(0.5 + 0.5 * cross_z, 0.12, 1)
         rw = clampf(0.5 - 0.5 * cross_z, 0.12, 1)
-        puff = clampf(math.hypot(*self._mouse_vel) / 1500, 0, 1) * clampf(1 - dist / 500, 0, 1)
-        return loom * lw, loom * rw, puff
+        return loom * lw, loom * rw, 0.0
 
     # ------------------------------------------------------------- loop
 
@@ -369,6 +365,8 @@ class DesktopFly:
         for click in self.sugar_grab.poll():
             self.drop_sugar(*self._scene_from_screen(click.x, click.y))
         for click in self.tap_sense.poll():
+            if self.brain.contains_screen_point(click.x, click.y):
+                continue
             if click.button == 1 and self.views:
                 self._inject_tap(self._scene_from_screen(click.x, click.y), self.views[0].fly)
             elif click.button == 3 and not self.sugar_grab.available \
@@ -420,9 +418,9 @@ class DesktopFly:
             signals.satiety = first.satiety
 
         mon = self.monitor
-        for i, view in enumerate(self.views):
+        for view in self.views:
             view.fly.terrain = self.terrain
-            view.fly.update(dt, self.bounds, mouse, signals if i == 0 else None)
+            view.fly.update(dt, self.bounds, mouse, signals)
             view.draw(mon)
 
         # feeding actually consumes the drop it is standing on

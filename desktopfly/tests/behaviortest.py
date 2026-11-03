@@ -164,10 +164,10 @@ def run(seed: int | None = DEFAULT_SEED) -> int:
         for _ in range(60):
             fly.update(DT, BOUNDS, None, walk_signals)
             if fly.state is State.FLYING:
-                return True, "took off"
-        return False, f"state={fly.state}"
+                return False, "took off without a GF spike"
+        return fly.ledge is None, f"detached, state={fly.state}"
 
-    body_check("window closes underfoot -> takeoff", check_vanish)
+    body_check("window closes underfoot -> detach without takeoff", check_vanish)
 
     def check_sleep():
         fly = Fly(0.0, 0.0)

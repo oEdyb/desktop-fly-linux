@@ -79,7 +79,7 @@ A 🪰 appears in the tray; quit from there, or Ctrl-C the terminal.
 | Move to Next Display | hop the fly across monitors (multi-monitor only) |
 | Leave Sugar at Cursor | drop sugar where the pointer is |
 | Clear Sugar | remove every drop (or click a drop to wipe just that one) |
-| Add / Remove Fly | extra flies (only fly #1 carries the brain) |
+| Add / Remove Fly | extra bodies sharing the same brain output |
 | Scare Flies | startle everyone |
 
 ## Sugar
@@ -126,7 +126,8 @@ fiber). FlyWire v783 *does* contain **334 gustatory neurons**, but scanning all
 circuit neurons** — they project into SEZ feeding circuitry instead. A genuine
 sugar pathway would mean extracting a second circuit, not extending this one.
 
-**The brain window is interactive**: drag with the left mouse button to rotate
+**The brain window is interactive**: drag the **Move brain** strip to reposition
+the window, including when KDE hides its frame. Drag the brain itself to rotate
 the brain horizontally and vertically; release without dragging to stimulate.
 On KDE Wayland, a temporary KWin script forwards cursor coordinates to the app
 so the fly can see cursor approaches over native Wayland windows. The script
@@ -139,6 +140,23 @@ measured mean firing rate in Hz per neuron, smoothed over 120 ms. Cyan and
 amber brightness in the brain follows the simulated spike rate, not cursor
 position directly. LC4 and LPLC2 are visual looming-sensitive neurons;
 Giant Fiber is a downstream escape command neuron, not a sensory receptor.
+
+Below the brain are **DNp09 · Walk** (1.2-second stimulation),
+**MDN · Moonwalk** (0.6 seconds), **Cut LC4/LPLC2 → GF**, and **GF · Bypass**
+(0.4 seconds). Start the movement experiments with an awake, grounded fly.
+The cut toggle zeroes exactly 216 directed visual-to-GF connection weights;
+click again to restore their original signed values. A persistent red
+**LC4/LPLC2 ✕ GF** marker appears over the brain while the cut is active.
+GF bypass directly stimulates the escape command neurons with the cut intact.
+
+This cuts the visual escape inputs, not the neurons or every escape pathway.
+Cursor movement supplies visual input only: LC4/LPLC2 can light up without
+GF-mediated takeoff when their GF connections are cut. Takeoff requires a GF
+spike; arousal, cursor distance, missing ledges and extra bodies have no direct
+takeoff shortcut. Taps and typing still use the separate mechanosensory pathway
+through the simulated neurons. Clicks in the brain controls are excluded from
+substrate taps. A cut cannot undo a flight already triggered or clear a neuron's
+existing charge.
 
 A steady cursor within 600 screen units supplies increasing visual input as
 it approaches. Distance, motion gains, and this display are modeled; this is

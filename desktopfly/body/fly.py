@@ -24,8 +24,6 @@ EDGE_MARGIN = 50.0
 FEED_SATIETY_RATE = 0.32  # satiety gained per second of feeding
 SATIETY_DECAY = 1.0 / 240.0  # hunger returns over ~4 minutes
 FEED_HUNGER_THRESHOLD = 0.75  # above this satiety, a drop is not worth stopping for
-SCARE_RADIUS = 110.0  # legacy behaviour (non-connectome flies) only
-NERVOUS_RADIUS = 240.0  # legacy behaviour only
 
 
 class State(Enum):
@@ -358,11 +356,6 @@ class Fly:
                 self.speed += (target - self.speed) * min(1.0, 3 * dt)
             if self.ledge is None:
                 self.heading += s.turn_bias * dt  # DNa01/DNa02 steering
-        # spontaneous takeoff, gated on whole-population arousal
-        flight_chance = 0.6 if s.arousal > 0.5 else 0.005
-        if self.state is State.WALKING and rnd(0, 1) < flight_chance * dt:
-            self.start_flight(bounds, effort=0.35 + s.arousal * 0.6)
-
     # --------------------------------------------------------------- walk
 
     def _update_walk(self, dt: float, bounds) -> None:
@@ -373,8 +366,7 @@ class Fly:
                 self.ledge = cur
             else:
                 self.ledge = None
-                self.start_flight(bounds)  # the ground vanished from under it
-                return
+                self.z = 0.0
         if self.ledge is not None:
             L = self.ledge
             self.heading += rnd(-1, 1) * 0.2 * dt
@@ -432,26 +424,11 @@ class Fly:
             if self.state is State.WALKING:
                 self._update_walk(dt, bounds)
         else:
-            # legacy distance-based fear, for the extra brainless flies
-            if self.scare_cooldown == 0 and mouse is not None:
-                d = math.hypot(mouse[0] - self.pos_x, mouse[1] - self.pos_y)
-                if d < SCARE_RADIUS:
-                    self.start_flight(bounds, away_from=mouse)
-                elif d < NERVOUS_RADIUS and self.state is not State.WALKING:
-                    self._set_state(State.WALKING)
-                    self.heading = math.atan2(self.pos_y - mouse[1], self.pos_x - mouse[0]) + rnd(-0.4, 0.4)
-                    self.speed = rnd(110, 150)
-                    self.state_timer = rnd(0.4, 0.9)
-                    self.scare_cooldown = 1.0
-            if self.state is not State.FLYING:
-                self.state_timer -= dt
-                if self.state_timer <= 0:
-                    if self.state is State.WALKING and rnd(0, 1) < 0.10:
-                        self.start_flight(bounds)
-                    else:
-                        self._pick_next_state()
-                if self.state is State.WALKING:
-                    self._update_walk(dt, bounds)
+            self.state_timer -= dt
+            if self.state_timer <= 0:
+                self._pick_next_state()
+            if self.state is State.WALKING:
+                self._update_walk(dt, bounds)
 
         if self.state is not State.FEEDING:
             self.satiety = max(0.0, self.satiety - SATIETY_DECAY * dt)

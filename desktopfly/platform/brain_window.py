@@ -19,7 +19,7 @@ from .gtkcompat import Gdk, GdkPixbuf, GLib, Gtk
 
 class BrainWindow:
     WIDTH = 340
-    HEIGHT = 400
+    HEIGHT = 546
 
     def __init__(self, renderer, sim, on_stimulate=None, on_close=None):
         self.renderer = renderer
@@ -36,6 +36,7 @@ class BrainWindow:
         self.win.set_keep_above(True)
         self.win.set_skip_taskbar_hint(True)
         self.win.set_resizable(False)
+        self.win.set_decorated(True)
         self.win.connect("delete-event", self._on_delete)
 
         overlay = Gtk.Overlay()
@@ -72,14 +73,36 @@ class BrainWindow:
         ctx.add_provider(provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
         overlay.add_overlay(self.label)
         overlay.set_overlay_pass_through(self.label, True)
+        self.cut_label = Gtk.Label(label="LC4/LPLC2 ✕ GF")
+        self.cut_label.set_halign(Gtk.Align.CENTER)
+        self.cut_label.set_valign(Gtk.Align.START)
+        self.cut_label.set_margin_top(8)
+        self.cut_label.set_no_show_all(True)
+        self.cut_label.set_markup('<span foreground="#ff6655"><b>LC4/LPLC2 ✕ GF</b></span>')
+        overlay.add_overlay(self.cut_label)
+        overlay.set_overlay_pass_through(self.cut_label, True)
         content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+        header = Gtk.EventBox()
+        move_label = Gtk.Label()
+        move_label.set_markup('<span foreground="#f2f2f2">Move brain</span>')
+        header.add(move_label)
+        header.set_size_request(-1, 28)
+        header.add_events(Gdk.EventMask.BUTTON_PRESS_MASK)
+        header.connect("button-press-event", self._on_move_press)
+        content.pack_start(header, False, False, 0)
+        self.move_handle = header
         content.pack_start(overlay, False, False, 0)
         self.group_buttons = {}
         self.groups = {}
         for role, name in [("lc4", "LC4"), ("lplc2", "LPLC2"),
-                           ("gf", "Giant Fiber (DNp01)")]:
+                           ("dnp09", "DNp09 · Walk"), ("mdn", "MDN · Moonwalk"),
+                           ("gf", "GF · Bypass")]:
             picked = np.flatnonzero(np.asarray(sim.roles) == role)
             self.groups[role] = (name, picked)
+            if role == "gf":
+                self.cut_button = Gtk.ToggleButton(label="Cut LC4/LPLC2 → GF")
+                self.cut_button.connect("toggled", self._on_cut_toggled)
+                content.pack_start(self.cut_button, False, False, 0)
             button = Gtk.Button(label=name)
             button.set_sensitive(len(picked) > 0)
             button.connect("clicked", lambda _button, role=role: self.stimulate_group(role))
@@ -90,6 +113,19 @@ class BrainWindow:
         self._visible = False
 
     # ------------------------------------------------------------ events
+
+    def _on_move_press(self, _widget, event):
+        if event.button != 1:
+            return False
+        self.win.begin_move_drag(event.button, int(event.x_root), int(event.y_root), event.time)
+        return True
+
+    def contains_screen_point(self, x, y):
+        if not self.visible:
+            return False
+        _ok, ox, oy = self.win.get_window().get_origin()
+        return (ox <= x < ox + self.win.get_allocated_width()
+                and oy <= y < oy + self.win.get_allocated_height())
 
     def _on_delete(self, *_):
         if self.on_close is not None:
@@ -146,11 +182,18 @@ class BrainWindow:
             self.on_stimulate(picked)
         return True
 
+    def _on_cut_toggled(self, button):
+        cut = button.get_active()
+        self.sim.set_escape_inputs_cut(cut)
+        self.cut_label.set_visible(cut)
+        button.set_label("Restore LC4/LPLC2 → GF" if cut else "Cut LC4/LPLC2 → GF")
+
     def stimulate_group(self, role):
         name, picked = self.groups[role]
         if not len(picked):
             return
-        self.sim.stimulate(picked, strength=0.25, duration_ms=400)
+        duration = {"dnp09": 1200, "mdn": 600}.get(role, 400)
+        self.sim.stimulate(picked, strength=0.25, duration_ms=duration)
         self._show_label(name)
         if self.on_stimulate:
             self.on_stimulate(picked)

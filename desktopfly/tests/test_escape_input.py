@@ -45,7 +45,7 @@ class EscapeInputTest(unittest.TestCase):
         brain.sim = sim
         brain._show_label = lambda _text: None
         brain.on_stimulate = None
-        for role, count in [('lc4', 104), ('lplc2', 210), ('gf', 2)]:
+        for role, count in [('lc4', 104), ('lplc2', 210), ('dnp09', 2), ('mdn', 4), ('gf', 2)]:
             picked = np.flatnonzero(np.asarray(sim.roles) == role)
             self.assertEqual(len(picked), count)
             brain.groups = {role: (role, picked)}

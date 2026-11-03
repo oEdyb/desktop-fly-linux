@@ -117,6 +117,9 @@ class LIFSim:
         self.row_start = np.zeros(self.n + 1, dtype=np.int64)
         np.cumsum(counts, out=self.row_start[1:])
         self._w_pos = self.w >= 0
+        self._visual_gf_mask = loom_mask[pre[order]] & is_gf[post[order]]
+        self._visual_gf_weights = self.w[self._visual_gf_mask].copy()
+        self.escape_inputs_cut = False
 
         # --- delayed-inhibition ring buffer ---
         self.inh_queue = np.zeros((self.INH_DELAY_MS + 1, self.n), dtype=np.float32)
@@ -171,6 +174,10 @@ class LIFSim:
         self._pending_stims.append((idx, float(strength), int(duration_ms)))
         if len(self._pending_stims) > 8:
             self._pending_stims.pop(0)
+
+    def set_escape_inputs_cut(self, cut: bool) -> None:
+        self.escape_inputs_cut = bool(cut)
+        self.w[self._visual_gf_mask] = 0 if cut else self._visual_gf_weights
 
     def consume_gf(self) -> bool:
         """True if the giant fiber spiked since the last call (latching)."""
