@@ -110,8 +110,10 @@ class TapSense:
                 if button == 0:
                     continue
                 p = self._d.screen().root.query_pointer()
+                from .overlay import pointer_position
+                x, y = pointer_position()
                 clicks.append(ClickEvent(
-                    button=button, x=p.root_x, y=p.root_y,
+                    button=button, x=x, y=y,
                     ctrl=bool(p.mask & _CONTROL), shift=bool(p.mask & _SHIFT),
                     alt=bool(p.mask & _ALT), super_=bool(p.mask & _SUPER),
                 ))

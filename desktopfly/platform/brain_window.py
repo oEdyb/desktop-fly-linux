@@ -15,6 +15,7 @@ from __future__ import annotations
 import numpy as np
 
 from .gtkcompat import Gdk, GdkPixbuf, GLib, Gtk
+from .overlay import window_origin
 
 
 class BrainWindow:
@@ -33,6 +34,10 @@ class BrainWindow:
         self.on_close = on_close
 
         self.win = Gtk.Window(title="Fly Brain — FlyWire v783 (click = stimulate)")
+        self.win.set_name("desktopfly-brain")
+        background = Gtk.CssProvider()
+        background.load_from_data(b"#desktopfly-brain { background-color: #080b10; }")
+        self.win.get_style_context().add_provider(background, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
         self.win.set_default_size(self.WIDTH, self.HEIGHT)
         self.win.set_type_hint(Gdk.WindowTypeHint.UTILITY)
         self.win.set_keep_above(True)
@@ -145,7 +150,7 @@ class BrainWindow:
     def contains_screen_point(self, x, y):
         if not self.visible:
             return False
-        _ok, ox, oy = self.win.get_window().get_origin()
+        ox, oy = window_origin(self.win)
         return (ox <= x < ox + self.win.get_allocated_width()
                 and oy <= y < oy + self.win.get_allocated_height())
 

@@ -1,0 +1,174 @@
+{
+  "date": "2026-11-03",
+  "compositor": "Niri 26.04 (8ed0da4) / xwayland-satellite 0.8.3",
+  "input": "private native Wayland virtual pointer; real mouse motion/button events",
+  "checks": [
+    {
+      "feature": "Brain move strip",
+      "pass": true,
+      "evidence": [
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/01-brain-move-press.png",
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/01-brain-move-mid.png",
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/01-brain-move-drop.png"
+      ]
+    },
+    {
+      "feature": "Brain drag-rotate",
+      "pass": true,
+      "evidence": [
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/02-rotate-press.png",
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/02-rotate-mid.png",
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/02-rotate-drop.png"
+      ]
+    },
+    {
+      "feature": "LC4 click-stimulation",
+      "pass": true,
+      "evidence": [
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/03-stimulate-lc4.png"
+      ]
+    },
+    {
+      "feature": "LPLC2 click-stimulation",
+      "pass": true,
+      "evidence": [
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/03-stimulate-lplc2.png"
+      ]
+    },
+    {
+      "feature": "GF click-stimulation / Bypass",
+      "pass": true,
+      "evidence": [
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/03-stimulate-gf.png"
+      ]
+    },
+    {
+      "feature": "Walk",
+      "pass": true,
+      "evidence": [
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/03-stimulate-dnp09.png"
+      ]
+    },
+    {
+      "feature": "Moonwalk",
+      "pass": true,
+      "evidence": [
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/03-stimulate-mdn.png"
+      ]
+    },
+    {
+      "feature": "Fly escapes cursor",
+      "pass": true,
+      "evidence": [
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/04-cursor-escape.png"
+      ]
+    },
+    {
+      "feature": "Cut blocks cursor takeoff",
+      "pass": true,
+      "evidence": [
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/05-cut-no-cursor-takeoff.png"
+      ]
+    },
+    {
+      "feature": "Bypass with Cut",
+      "pass": true,
+      "evidence": [
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/06-bypass-with-cut.png"
+      ]
+    },
+    {
+      "feature": "food press/mid/drop",
+      "pass": true,
+      "evidence": [
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/07-food-press.png",
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/07-food-mid.png",
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/07-food-drop.png"
+      ]
+    },
+    {
+      "feature": "bitter press/mid/drop",
+      "pass": true,
+      "evidence": [
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/07-bitter-press.png",
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/07-bitter-mid.png",
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/07-bitter-drop.png"
+      ]
+    },
+    {
+      "feature": "odor press/mid/drop",
+      "pass": true,
+      "evidence": [
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/07-odor-press.png",
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/07-odor-mid.png",
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/07-odor-drop.png"
+      ]
+    },
+    {
+      "feature": "Food drag causes feeding",
+      "pass": true,
+      "evidence": [
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/08-food-feeding-press.png",
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/08-food-feeding.png"
+      ]
+    },
+    {
+      "feature": "Bitter snaps and stops feeding",
+      "pass": true,
+      "evidence": [
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/09-bitter-on-food-press.png",
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/09-bitter-on-food-mid.png",
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/09-bitter-on-food-drop.png",
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/09-bitter-feeding-stopped.png"
+      ]
+    },
+    {
+      "feature": "Smell drag causes brain response",
+      "pass": true,
+      "evidence": [
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/10-smell-press.png",
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/10-smell-mid.png",
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/10-smell-drop.png",
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/10-smell-response.png"
+      ]
+    },
+    {
+      "feature": "Rapid sloppy drags release correctly",
+      "pass": true,
+      "evidence": [
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/11-sloppy-food.png",
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/11-sloppy-bitter.png",
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/11-sloppy-odor.png"
+      ]
+    },
+    {
+      "feature": "Right-click removes each item",
+      "pass": true,
+      "evidence": [
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/12-remove-food.png",
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/12-remove-bitter.png",
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/12-remove-odor.png"
+      ]
+    },
+    {
+      "feature": "Reset clears items and neural state",
+      "pass": true,
+      "evidence": [
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/13-clear-before.png",
+        "/home/olle/dev/desktop-fly-linux/artifacts/niri-qa/13-clear-after.png"
+      ]
+    }
+  ],
+  "video": {
+    "frames": 658,
+    "actual_seconds": 82.32795229397016,
+    "nominal_fps": 8,
+    "compositor": "Niri nested in private KWin; full actual viewport"
+  },
+  "automated": {
+    "unit_tests": 19,
+    "behavior_checks": 21,
+    "simtest": true,
+    "sensorytest": true
+  }
+}

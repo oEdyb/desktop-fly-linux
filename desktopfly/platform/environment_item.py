@@ -11,13 +11,15 @@ from .overlay import Overlay
 class EnvironmentItem:
     TILE = 72
 
-    def __init__(self, source, kind, monitor, remove):
+    def __init__(self, source, kind, monitor, remove, on_drop=None):
         self.drop = source
         self.kind = kind
         self.monitor = monitor
         self.remove = remove
-        self.overlay = Overlay(self.TILE, self.TILE, on_click=lambda _e: remove(source),
-                               on_drag=self.drag)
+        self.on_drop = on_drop
+        self.preview = None
+        self.overlay = Overlay(self.TILE, self.TILE, on_click=lambda e: remove(source) if e.button == 3 else None,
+                               on_drag=self.drag, on_pickup=self.pickup, on_drop=self.finish_drag)
         self.renderer = SugarRenderer(self.TILE)
         self.plume = Overlay(600, 300) if kind == "odor" else None
         self._last_radius = -1
@@ -26,9 +28,19 @@ class EnvironmentItem:
     def drag(self, dx, dy):
         self.drop.x += dx
         self.drop.y -= dy
-        m = self.monitor
-        self.drop.x = max(-m["width"] / 2 + 15, min(m["width"] / 2 - 15, self.drop.x))
-        self.drop.y = max(-m["height"] / 2 + 15, min(m["height"] / 2 - 15, self.drop.y))
+        self.draw()
+
+    def pickup(self):
+        self.preview = Overlay(self.TILE, self.TILE)
+        self.overlay.blit(cairo.ImageSurface(cairo.FORMAT_ARGB32, self.TILE, self.TILE))
+        self.draw(force=True)
+
+    def finish_drag(self):
+        if self.on_drop:
+            self.on_drop(self.drop)
+        if self.preview:
+            self.preview.destroy()
+            self.preview = None
         self.draw(force=True)
 
     def contains(self, x, y):
@@ -41,7 +53,8 @@ class EnvironmentItem:
 
     def draw(self, force=False):
         cx, cy = self.center()
-        self.overlay.move(cx - self.TILE / 2, cy - self.TILE / 2)
+        visual = self.preview or self.overlay
+        visual.move(cx - self.TILE / 2, cy - self.TILE / 2)
         if self.plume:
             self.plume.move(cx - 100, cy - 150)
         radius = self.drop.draw_radius
@@ -61,7 +74,7 @@ class EnvironmentItem:
             cr.set_font_size(15)
             cr.move_to(31, 41)
             cr.show_text("B" if self.kind == "bitter" else "O")
-        self.overlay.blit(surface)
+        visual.blit(surface)
         self.overlay.set_input_circle(max(12, radius + 2))
         if self.plume:
             self._draw_plume()
@@ -82,5 +95,8 @@ class EnvironmentItem:
 
     def destroy(self):
         self.overlay.destroy()
+        if self.preview:
+            self.preview.destroy()
+            self.preview = None
         if self.plume:
             self.plume.destroy()

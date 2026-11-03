@@ -26,7 +26,7 @@ the old approach-to-sugar demonstration. Installations without the optional
 model retain that legacy mode and print an explicit message.
 
 Click Food, Bitter or Smell to spawn an item 80 pixels from the fly. Drag it
-onto the fly or elsewhere. Click an item to remove it. Ctrl+right-click places
+onto the fly or elsewhere. Right-click an item to remove it. Ctrl+right-click places
 the last selected kind at the pointer. Tray actions place each kind directly.
 Reset environment clears all items, resets sensory voltages/spikes and hunger.
 
@@ -170,6 +170,18 @@ Screenshots: [magnified feeding](img/environment-feeding-detail.png),
 [magnified bitter suppression](img/environment-bitter-detail.png),
 [feeding](img/environment-feeding.png),
 [bitter suppression](img/environment-bitter.png), [odor response](img/environment-odor.png).
+
+## Desktop dragging on Niri
+
+Niri uses a stationary native Wayland layer surface for input. A held item's
+preview moves within that surface, preserving the pointer's original grip offset.
+Release commits the final position and restores the small input region. KDE/X11
+uses the same stationary-input/moving-preview approach with an explicit pointer
+grab and a release watchdog. Bitter snaps to Food within 28 logical pixels.
+Left press picks up; right-click removes. Item interaction does not inject looming
+input into the escape circuit.
+
+[Niri QA](NIRI_QA.md) records the full mouse-driven sweep, screenshots and video.
 
 ## Sources
 

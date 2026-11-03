@@ -26,7 +26,7 @@ from .platform.environment import (
 )
 from .platform.environment_item import EnvironmentItem
 from .platform.gtkcompat import GLib, Gtk
-from .platform.overlay import Overlay, monitors, pointer_position
+from .platform.overlay import Overlay, monitors, pointer_position, set_overlay_parent
 from .platform.taps import ButtonGrab, TapSense
 from .platform.tray import Tray
 from .render.brain_renderer import BrainRenderer
@@ -48,7 +48,7 @@ class FlyView:
 
     def __init__(self, fly: Fly):
         self.fly = fly
-        self.overlay = Overlay(TILE, TILE)
+        self.overlay = Overlay(TILE, TILE, name="desktopfly-body")
         self.renderer = FlyRenderer(TILE)
 
     def draw(self, monitor: dict) -> None:
@@ -122,7 +122,7 @@ class DesktopFly:
             self.sensory = SensoryRuntime(sensory_data, seed)
             self.data_info += f" · whole-brain senses {self.sensory.info['neurons']}n"
 
-        self.views: list[FlyView] = [FlyView(Fly(*self._random_start()))]
+        self.views: list[FlyView] = []
         self.paused = False
 
         self.brain_renderer = BrainRenderer(points, self.sim)
@@ -133,6 +133,10 @@ class DesktopFly:
         self.brain.place_bottom_right(self.monitor)
         if show_brain:
             self.brain.show()
+        else:
+            self.brain.win.realize()
+        set_overlay_parent(self.brain.win)
+        self.views.append(FlyView(Fly(*self._random_start())))
 
         self.window_sense = WindowSense()
         self.idle_sense = IdleSense()
@@ -254,10 +258,22 @@ class DesktopFly:
         if not self.sensory:
             return
         source = self.environment.add(kind, x, y)
-        self.item_views.append(EnvironmentItem(source, kind, self.monitor, self.remove_drop))
+        self.item_views.append(EnvironmentItem(source, kind, self.monitor, self.remove_drop,
+                                                on_drop=self.snap_item))
         self._sync_sugar_views()
         for view in self.views:
             view.overlay.raise_()
+
+    def snap_item(self, source):
+        if source.kind != "bitter" or not self.sugar.drops:
+            return
+        food = min(self.sugar.drops, key=lambda drop: math.hypot(source.x - drop.x, source.y - drop.y))
+        if math.hypot(source.x - food.x, source.y - food.y) <= 28:
+            source.x, source.y = food.x, food.y
+            for view in self.item_views:
+                if view.drop is source:
+                    view.draw()
+                    break
 
     def drop_item_at_cursor(self, kind):
         px, py = pointer_position()
@@ -447,7 +463,15 @@ class DesktopFly:
         signals = None
         if self.views:
             first = self.views[0].fly
-            loom_l, loom_r, puff = self._compute_loom(first, mouse, dt)
+            interacting = self.brain.contains_screen_point(px, py) or any(
+                view.overlay._drag.active or view.contains(px, py)
+                for view in self.sugar_views + self.item_views
+                if isinstance(view, EnvironmentItem)
+            )
+            if interacting:
+                self._prev_mouse = None
+                self._mouse_vel[:] = [0.0, 0.0]
+            loom_l, loom_r, puff = self._compute_loom(first, None if interacting else mouse, dt)
             decay = math.exp(-4 * dt)
             self._window_loom_l *= decay
             self._window_loom_r *= decay

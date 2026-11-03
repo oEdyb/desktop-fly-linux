@@ -20,16 +20,33 @@ Two things forced the design away from a straight translation:
 from __future__ import annotations
 
 import math
+import os
 
 import cairo
 import numpy as np
 
 from .gtkcompat import Gdk, GdkPixbuf, GLib, Gtk
+from .item_drag import ItemDrag
 
 from Xlib import display as _xdisplay  # noqa: E402
 from Xlib.ext import shape as _shape  # noqa: E402
 
 _XDISPLAY = None
+_overlay_parent = None
+_niri_coordinates = None
+def set_overlay_parent(parent):
+    global _overlay_parent, _niri_coordinates
+    _overlay_parent = parent
+    if os.environ.get("NIRI_SOCKET"):
+        from .niri_coordinates import NiriCoordinates
+        _niri_coordinates = NiriCoordinates(parent)
+
+
+def window_origin(window):
+    if _niri_coordinates is not None:
+        return _niri_coordinates.origin(window)
+    _ok, x, y = window.get_window().get_origin()
+    return x, y
 
 
 def _xdisp():
@@ -80,8 +97,15 @@ def surface_to_pixbuf(surf: cairo.ImageSurface, w: int, h: int) -> GdkPixbuf.Pix
 class Overlay:
     """One transparent, click-through window that follows a point on screen."""
 
+    def __new__(cls, width, height, name="desktopfly", on_click=None, on_drag=None,
+                on_drop=None, on_pickup=None):
+        if os.environ.get("NIRI_SOCKET"):
+            from .native_overlay import NativeOverlay
+            return NativeOverlay(width, height, name, on_click, on_drag, on_drop, on_pickup)
+        return super().__new__(cls)
+
     def __init__(self, width: int, height: int, name: str = "desktopfly",
-                 on_click=None, on_drag=None):
+                 on_click=None, on_drag=None, on_drop=None, on_pickup=None):
         """``on_click`` makes the overlay accept button presses.
 
         Without it the window is fully click-through. With it, the clickable
@@ -93,10 +117,13 @@ class Overlay:
         self.height = height
         self._on_click = on_click
         self._on_drag = on_drag
-        self._drag_origin = None
-        self._drag_moved = False
+        self._on_pickup = on_pickup
+        self._on_drop = on_drop
+        self._drag = None
         self._input_radius = None
         self.win = Gtk.Window(type=Gtk.WindowType.POPUP)
+        if _overlay_parent is not None:
+            self.win.set_transient_for(_overlay_parent)
         self.win.set_name(name)
         screen = self.win.get_screen()
         visual = screen.get_rgba_visual()
@@ -125,6 +152,8 @@ class Overlay:
             if on_drag is not None:
                 self.win.connect("motion-notify-event", self._handle_drag)
                 self.win.connect("button-release-event", self._handle_release)
+                self.win.connect("grab-broken-event", self._cancel_drag)
+                self.win.connect("unmap", self._cancel_drag)
         self.win.connect("realize", self._on_realize)
         # GDK rewrites the input shape while mapping the window, so a shape set
         # during "realize" is silently discarded. It has to be (re)applied once
@@ -132,9 +161,13 @@ class Overlay:
         self.win.connect("map-event", self._on_map)
         self._x = -10_000
         self._y = -10_000
+        self._screen_x = self._screen_y = -10_000
         self.win.show_all()
         self.gdk_window = self.win.get_window()
         self.gdk_window.move(self._x, self._y)
+        if on_drag is not None:
+            self._drag = ItemDrag(self.gdk_window, pointer_state, on_drag, self._finish_drag)
+
 
     def _on_realize(self, *_):
         gw = self.win.get_window()
@@ -151,32 +184,33 @@ class Overlay:
 
     def _handle_click(self, _widget, event):
         if self._on_drag is not None and event.button == 1:
-            self._drag_origin = (event.x_root, event.y_root)
-            self._drag_moved = False
+            if self._drag.press(event, (event.x, event.y)):
+                if self._on_pickup:
+                    self._on_pickup()
             return True
         if self._on_click is not None:
             self._on_click(event)
         return True
 
     def _handle_drag(self, _widget, event):
-        if self._drag_origin is None:
+        if not self._drag.active:
             return False
-        x, y = self._drag_origin
-        dx, dy = event.x_root - x, event.y_root - y
-        if self._drag_moved or dx * dx + dy * dy > 9:
-            self._drag_moved = True
-            self._on_drag(dx, dy)
-            self._drag_origin = (event.x_root, event.y_root)
+        self._drag.update((event.x, event.y))
         return True
 
     def _handle_release(self, _widget, event):
-        if event.button != 1 or self._drag_origin is None:
+        if event.button != 1:
             return False
-        self._handle_drag(_widget, event)
-        self._drag_origin = None
-        if not self._drag_moved:
-            self._on_click(event)
-        return True
+        return self._drag.release((event.x, event.y))
+
+    def _finish_drag(self):
+        if self._on_drop:
+            self._on_drop()
+
+    def _cancel_drag(self, *_):
+        if self._drag:
+            self._drag.cancel()
+        return False
 
     def set_input_circle(self, radius: float) -> None:
         """Restrict the clickable area to a disc of ``radius`` at the centre."""
@@ -217,6 +251,7 @@ class Overlay:
         d.sync()
 
     def move(self, x: int, y: int) -> None:
+        self._screen_x, self._screen_y = x, y
         x, y = int(x), int(y)
         if (x, y) != (self._x, self._y):
             self._x, self._y = x, y
@@ -238,6 +273,7 @@ class Overlay:
         self.win.set_visible(visible)
 
     def destroy(self) -> None:
+        self._cancel_drag()
         self.win.destroy()
 
 
@@ -268,10 +304,14 @@ _pointer_checked = False
 
 def pointer_position() -> tuple[int, int]:
     global _kde_pointer, _pointer_checked
+    if os.environ.get("NIRI_SOCKET"):
+        from .native_overlay import native_pointer
+        position = native_pointer()
+        if position is not None:
+            return position
     if not _pointer_checked:
         _pointer_checked = True
-        import os
-        if os.environ.get("XDG_SESSION_TYPE") == "wayland" and "KDE" in os.environ.get("XDG_CURRENT_DESKTOP", ""):
+        if not os.environ.get("NIRI_SOCKET") and os.environ.get("XDG_SESSION_TYPE") == "wayland" and "KDE" in os.environ.get("XDG_CURRENT_DESKTOP", ""):
             from .kde_pointer import KDEPointer
             try:
                 _kde_pointer = KDEPointer()
@@ -280,7 +320,13 @@ def pointer_position() -> tuple[int, int]:
                 warnings.warn(f"KDE cursor bridge unavailable; XWayland cursor only: {error}")
     if _kde_pointer is not None and _kde_pointer.position is not None:
         return _kde_pointer.position
-    display = Gdk.Display.get_default()
-    seat = display.get_default_seat()
-    _screen, x, y = seat.get_pointer().get_position()
-    return x, y
+    pointer = _xdisp().screen().root.query_pointer()
+    if _niri_coordinates is not None:
+        return _niri_coordinates.pointer(pointer)
+    return pointer.root_x, pointer.root_y
+
+
+def pointer_state():
+    x, y = pointer_position()
+    pointer = _xdisp().screen().root.query_pointer()
+    return x, y, bool(pointer.mask & 256)

@@ -49,8 +49,11 @@ sudo apt install python3-numpy python3-cairo python3-xlib python3-gi \
                  python3-pil gir1.2-ayatanaappindicator3-0.1
 ```
 
-No `python3-gi-cairo` needed — the renderer deliberately avoids the GI/cairo
-bridge (see [docs/PORT_PLAN.md](docs/PORT_PLAN.md#rendering)).
+X11 and KDE use the GTK3/XWayland renderer. Niri uses native Wayland layer
+surfaces for flies and draggable items, with a GTK3 brain window. On Arch/CachyOS,
+install `gtk4 gtk4-layer-shell python-gobject python-cairo` for that backend.
+The Niri helper needs the GI/cairo bridge. Other backends do not.
+See [Niri verification](docs/NIRI_QA.md) for the desktop interaction checks.
 
 ## Run
 
@@ -98,7 +101,7 @@ simulations: taste and odor use the full-brain model; escape, walking,
 moonwalking, grooming and turning retain the original circuit and tuning.
 
 Click **Food**, **Bitter**, or **Smell** to create an item near the fly. Drag
-items to position them; click an item to remove it. Ctrl+right-click places the
+items to position them; right-click an item to remove it. Ctrl+right-click places the
 last selected kind at the cursor, and the tray can place each kind directly.
 **Reset environment** removes items, resets the sensory model, and restores
 hunger for another experiment. Existing movement controls remain above these.
