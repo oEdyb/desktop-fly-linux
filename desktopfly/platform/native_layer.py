@@ -10,9 +10,8 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Gdk", "4.0")
-gi.require_version("Gtk4LayerShell", "1.0")
 gi.require_foreign("cairo")
-from gi.repository import Gdk, GLib, Gtk, Gtk4LayerShell as Layer
+from gi.repository import Gdk, GLib, Gtk
 
 
 def emit(event, **values):
@@ -21,6 +20,9 @@ def emit(event, **values):
 
 class MonitorLayer:
     def __init__(self, scene, monitor):
+        gi.require_version("Gtk4LayerShell", "1.0")
+        from gi.repository import Gtk4LayerShell as Layer
+
         self.scene = scene
         self.geometry = monitor.get_geometry()
         self.window = Gtk.Window()

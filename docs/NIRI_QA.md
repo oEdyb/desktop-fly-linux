@@ -57,3 +57,13 @@ press/mid/drop checks for all three items, plus rapid zigzag drags and release
 over a native Wayland window. Evidence: `artifacts/kde-qa/` and
 [kde-verification.json](kde-verification.json). This exercises the GTK3 grab path,
 rather than treating the outer KWin video host as a KDE application test.
+
+On Niri, the 49×49 logical-pixel area around a fly receives pointer input so the
+app can sense a cursor approaching it. That area also intercepts clicks to the
+window underneath the fly. Interactive Food/Bitter/Smell underneath the fly remain
+selectable. This is a Niri backend limitation, not unrestricted cursor observation.
+
+Independent Opus reviews identified the item-under-fly and edge-recovery gaps;
+both were fixed and the recheck passed. The separate KDE run supplies the missing
+KDE evidence requested by the behavior review. XWayland overlays retain their
+original independence from the brain window; no new transient-parent rule is used.

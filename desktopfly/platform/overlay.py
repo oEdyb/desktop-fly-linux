@@ -32,11 +32,9 @@ from Xlib import display as _xdisplay  # noqa: E402
 from Xlib.ext import shape as _shape  # noqa: E402
 
 _XDISPLAY = None
-_overlay_parent = None
 _niri_coordinates = None
 def set_overlay_parent(parent):
-    global _overlay_parent, _niri_coordinates
-    _overlay_parent = parent
+    global _niri_coordinates
     if os.environ.get("NIRI_SOCKET"):
         from .niri_coordinates import NiriCoordinates
         _niri_coordinates = NiriCoordinates(parent)
@@ -122,8 +120,6 @@ class Overlay:
         self._drag = None
         self._input_radius = None
         self.win = Gtk.Window(type=Gtk.WindowType.POPUP)
-        if _overlay_parent is not None:
-            self.win.set_transient_for(_overlay_parent)
         self.win.set_name(name)
         screen = self.win.get_screen()
         visual = screen.get_rgba_visual()
