@@ -330,8 +330,8 @@ class DesktopFly:
         dist = max(20.0, math.hypot(*rel))
         # radial approach speed (positive = cursor closing in)
         approach = -(rel[0] * self._mouse_vel[0] + rel[1] * self._mouse_vel[1]) / dist
-        loom = clampf(approach / dist * 6, 0, 1) * clampf(1 - dist / 800, 0, 1)
-        loom += clampf((130 - dist) / 130, 0, 1) * 0.5  # hovering close = big object
+        loom = clampf(approach / dist * 0.35, 0, 1) * clampf(1 - dist / 800, 0, 1)
+        loom += 0.9 * clampf(1 - dist / 600, 0, 1) ** 2
         loom = clampf(loom + self._loom_override, 0, 1)
         f = (math.cos(fly.heading), math.sin(fly.heading))
         rd = (rel[0] / dist, rel[1] / dist)

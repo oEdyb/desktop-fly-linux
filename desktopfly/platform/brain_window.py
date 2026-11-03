@@ -19,7 +19,7 @@ from .gtkcompat import Gdk, GdkPixbuf, GLib, Gtk
 
 class BrainWindow:
     WIDTH = 340
-    HEIGHT = 280
+    HEIGHT = 400
 
     def __init__(self, renderer, sim, on_stimulate=None, on_close=None):
         self.renderer = renderer
@@ -72,7 +72,20 @@ class BrainWindow:
         ctx.add_provider(provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
         overlay.add_overlay(self.label)
         overlay.set_overlay_pass_through(self.label, True)
-        self.win.add(overlay)
+        content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+        content.pack_start(overlay, False, False, 0)
+        self.group_buttons = {}
+        self.groups = {}
+        for role, name in [("lc4", "LC4"), ("lplc2", "LPLC2"),
+                           ("gf", "Giant Fiber (DNp01)")]:
+            picked = np.flatnonzero(np.asarray(sim.roles) == role)
+            self.groups[role] = (name, picked)
+            button = Gtk.Button(label=name)
+            button.set_sensitive(len(picked) > 0)
+            button.connect("clicked", lambda _button, role=role: self.stimulate_group(role))
+            content.pack_start(button, False, False, 0)
+            self.group_buttons[role] = button
+        self.win.add(content)
         self._label_timer = None
         self._visible = False
 
@@ -133,6 +146,15 @@ class BrainWindow:
             self.on_stimulate(picked)
         return True
 
+    def stimulate_group(self, role):
+        name, picked = self.groups[role]
+        if not len(picked):
+            return
+        self.sim.stimulate(picked, strength=0.25, duration_ms=400)
+        self._show_label(name)
+        if self.on_stimulate:
+            self.on_stimulate(picked)
+
     def _show_label(self, text: str) -> None:
         self.label.set_text(text)
         self.label.show()
@@ -150,6 +172,9 @@ class BrainWindow:
     def draw(self, dt: float) -> None:
         if not self._visible:
             return
+        for role, (name, picked) in self.groups.items():
+            rate = float(self.sim.neuron_rates[picked].mean()) if len(picked) else 0.0
+            self.group_buttons[role].set_label(f"{name} · {len(picked)} neurons · {rate:.0f} Hz")
         self.renderer.drain_spikes()
         rgba = self.renderer.render(dt)
         h, w = rgba.shape[:2]

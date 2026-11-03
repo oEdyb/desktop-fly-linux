@@ -132,6 +132,19 @@ On KDE Wayland, a temporary KWin script forwards cursor coordinates to the app
 so the fly can see cursor approaches over native Wayland windows. The script
 is unloaded on normal exit; no desktop input is intercepted.
 
+The brain window also has **LC4 (104 neurons)**, **LPLC2 (210 neurons)**,
+and **Giant Fiber / DNp01 (2 neurons)** buttons. Click a button to inject
+current into that exact circuit group. The number beside it is the group's
+measured mean firing rate in Hz per neuron, smoothed over 120 ms. Cyan and
+amber brightness in the brain follows the simulated spike rate, not cursor
+position directly. LC4 and LPLC2 are visual looming-sensitive neurons;
+Giant Fiber is a downstream escape command neuron, not a sensory receptor.
+
+A steady cursor within 600 screen units supplies increasing visual input as
+it approaches. Distance, motion gains, and this display are modeled; this is
+not a calibrated biological response curve. Takeoff still requires a Giant
+Fiber spike. Fast cursor lunges can trigger escape before a slow buildup.
+
 Brain controls: hovering pauses the rotation; clicking a
 region stimulates the ~60 nearest circuit neurons for 400 ms. The fly's reaction
 is whatever the real network does downstream — click the Giant Fiber and it

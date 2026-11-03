@@ -164,10 +164,20 @@ class BrainRenderer:
         self._accum[:] = 0.0
 
         x, y, _d, ok = self._project(self.points, matrix)
-        self._scatter(x, y, ok, self.point_colors, gain=1.15, spread=0.38)
+        self._scatter(x, y, ok, self.point_colors, gain=0.30, spread=0.38)
 
         cx, cy, _cd, cok = self._project(self.circuit_pos, matrix)
-        self._scatter(cx, cy, cok, self.circuit_colors, gain=0.60, spread=0.55)
+        self._scatter(cx, cy, cok, self.circuit_colors, gain=0.20, spread=0.55)
+
+        for role, color in [("lc4", (0.15, 0.85, 1.0)),
+                            ("lplc2", (0.15, 0.85, 1.0)),
+                            ("gf", (1.0, 0.85, 0.25))]:
+            active = np.flatnonzero((np.asarray(self.sim.roles) == role) & cok
+                                    & (self.sim.neuron_rates > 1.0))
+            gain = np.clip(self.sim.neuron_rates[active] / 100.0, 0, 2)
+            colors = np.tile(color, (len(active), 1)) * gain[:, None]
+            self._scatter(cx[active], cy[active], np.ones(len(active), dtype=bool),
+                          colors, gain=2.0, spread=0.7)
 
         # the two giant fibers get their own steady glow
         for i in self.gf_idx:

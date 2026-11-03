@@ -151,6 +151,7 @@ class LIFSim:
         self._gf_latch = False
         self.sim_ms = 0
         self.total_spikes = 0
+        self.neuron_rates = np.zeros(self.n, dtype=np.float32)
 
         self._burst_until = 0
         self._burst_next = 12_000
@@ -267,6 +268,9 @@ class LIFSim:
                         self.inh_queue[inh_slot] += inh.astype(np.float32)
 
             self.q_head = (self.q_head + 1) % self.inh_queue.shape[0]
+
+            self.neuron_rates *= 1.0 - self.RATE_ALPHA
+            self.neuron_rates[spiked] += 1000.0 * self.RATE_ALPHA
 
             # 6. per-group rates (Hz per neuron, EMA with tau = 120 ms)
             if spiked.size:
