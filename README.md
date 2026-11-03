@@ -8,9 +8,9 @@ connectome** says so, not because an animation was triggered.
 
 ![The fly crossing an editor to reach a drop of sugar](docs/img/fly-sugar.gif)
 
-*Ctrl+right-click leaves sugar; the odour steers the real DNa01/DNa02 and DNp09
-neurons and the fly walks over to feed. It is standing on the very neuron
-coordinates that drive it — `data/brain_points.json`.*
+*The original sugar-approach demo above is available with `--legacy-sugar`.
+The optional whole-brain environment adds real sugar/bitter sensory pathways
+and an olfactory neural readout, described below.*
 
 ![The fly and a drop of sugar on a text editor](docs/img/fly.png)
 
@@ -21,7 +21,7 @@ for what was translated, what was rewritten, and what Wayland makes impossible.
 
 ## What's real
 
-Unchanged from upstream — the port uses the same derived data files:
+The original movement circuit and its bundled data remain intact:
 
 - **23,210 real neuron soma positions** (of 139,255 in FlyWire v783) render the
   rotating brain window, coloured by super-class.
@@ -82,7 +82,53 @@ A 🪰 appears in the tray; quit from there, or Ctrl-C the terminal.
 | Add / Remove Fly | extra bodies sharing the same brain output |
 | Scare Flies | startle everyone |
 
-## Sugar
+## Whole-brain environment
+
+```sh
+./tools/setup-senses.sh     # uv + system Python; downloads about 107 MB
+./run.sh                   # automatically uses the prepared model
+./run.sh --sensorytest      # reproducible whole-brain responses and speed, JSON
+./run.sh --legacy-sugar     # original 668-neuron sugar demo
+```
+
+This adds the **138,639-neuron published FlyWire v783 model**, with
+**15,091,983 directed weighted connections representing 54,492,922 synapses**.
+It runs alongside the original movement circuit. They are independent
+simulations: taste and odor use the full-brain model; escape, walking,
+moonwalking, grooming and turning retain the original circuit and tuning.
+
+Click **Food**, **Bitter**, or **Smell** to create an item near the fly. Drag
+items to position them; click an item to remove it. Ctrl+right-click places the
+last selected kind at the cursor, and the tray can place each kind directly.
+**Reset environment** removes items, resets the sensory model, and restores
+hunger for another experiment. Existing movement controls remain above these.
+
+- **Food:** contact stimulates 20 mapped labellar sugar GRNs at 100 Hz.
+  Activity propagates through the published signed connectivity. The fly
+  feeds only while the mapped **MN9** proboscis motor neuron has fired recently.
+- **Bitter:** contact stimulates 20 mapped bitter GRNs at 200 Hz. In seeded
+  probes, coactivation suppresses MN9 through the network. No bitter flag
+  directly stops the body animation.
+- **Smell:** a generic plume stimulates the 68 annotated **ORN_DM1** neurons,
+  up to 100 Hz. The brain view shows their response and the two **DM1_lPN**
+  projection neurons. **No odor steering is implemented or claimed.**
+
+The brain readout reports measured Hz per neuron and sensory simulation speed
+relative to wall time. The odor response is exploratory and unvalidated: this
+unmodified model can produce very high, persistent projection-neuron activity.
+Use Reset environment between experiments. It is not a calibrated odorant model.
+
+The full model uses the paper’s LIF equations and 0.1 ms timestep, with a
+compiled CPU solver. Taste runs faster than real time on the tested Ryzen
+9600X; broad olfactory activity is slower. A separate worker keeps the desktop
+responsive and displays the slower neural clock. Inputs coalesce to their
+latest values rather than building up an old-stimulus backlog.
+
+Source IDs, missing v630-to-v783 IDs, numerical checks, hardware timings,
+screenshots, and the real/scripted boundary are in [the implementation report](docs/ENVIRONMENT.md).
+Model data stay in the user cache and are not added to the repository.
+
+## Legacy sugar demo
 
 **Ctrl + right-click anywhere** leaves a drop of sugar on the screen (or use the
 tray menu). **Click a drop to wipe it up.** Only the bead itself is clickable —
@@ -107,9 +153,11 @@ the grab only covers **X11/XWayland** surfaces — Ctrl+right-click over a nativ
 Wayland window (the GNOME desktop background, for instance) will not register.
 The tray's *Leave Sugar at Cursor* always works.
 
-### What's real about it
+### What's real about the legacy demo
 
-Approach is real; taste is not. Specifically:
+This section applies only to `--legacy-sugar` or an installation without the
+optional whole-brain model. Approach stimulates real command neurons directly;
+taste is not simulated. Specifically:
 
 - **Real**: the odour bearing is injected as current onto the actual
   **DNa01/DNa02** steering neurons and the actual **DNp09** walking command

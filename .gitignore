@@ -3,6 +3,7 @@ __pycache__/
 build/
 *.egg-info/
 scratch/
+.venv*/
 *.png
 !upstream/assets/*.png
 !docs/img/*.png

@@ -70,6 +70,7 @@ class BrainRenderer:
         self.angle = 0.0
         self.tilt = TILT_X
         self.paused = False
+        self.sensory = None
         self._flashes: list[list] = []  # [neuron, age, is_gf]
         self._accum = np.zeros((height, width, 3), dtype=np.float32)
         self._rgba = np.zeros((height, width, 4), dtype=np.uint8)
@@ -168,6 +169,8 @@ class BrainRenderer:
 
         cx, cy, _cd, cok = self._project(self.circuit_pos, matrix)
         self._scatter(cx, cy, cok, self.circuit_colors, gain=0.20, spread=0.55)
+        if self.sensory:
+            self._render_sensory(matrix)
 
         for role, color in [("lc4", (0.15, 0.85, 1.0)),
                             ("lplc2", (0.15, 0.85, 1.0)),
@@ -214,6 +217,18 @@ class BrainRenderer:
         self._rgba[..., :3] = (np.clip(rgb, 0.0, 1.0) * 255).astype(np.uint8)
         self._rgba[..., 3] = 255
         return self._rgba
+
+    def _render_sensory(self, matrix):
+        rates = self.sensory.neuron_rates
+        for group, color in (("sugar", (1.0, 0.7, 0.1)), ("bitter", (0.8, 0.2, 1.0)),
+                             ("orn", (0.1, 1.0, 0.75)), ("pn", (0.1, 1.0, 0.75)),
+                             ("mn9", (1.0, 0.3, 0.15))):
+            indices = self.sensory.groups[group]
+            indices = indices[np.isfinite(self.sensory.positions[indices]).all(axis=1)]
+            x, y, _, ok = self._project(self.sensory.positions[indices], matrix)
+            gain = 0.2 + np.clip(rates[indices] / 80, 0, 3)
+            colors = np.tile(color, (len(indices), 1)) * gain[:, None]
+            self._scatter(x, y, ok, colors, gain=2, spread=0.8)
 
     def _blob(self, x: float, y: float, radius: float, color, strength: float) -> None:
         r = int(math.ceil(radius))

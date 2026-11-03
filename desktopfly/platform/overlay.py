@@ -81,7 +81,7 @@ class Overlay:
     """One transparent, click-through window that follows a point on screen."""
 
     def __init__(self, width: int, height: int, name: str = "desktopfly",
-                 on_click=None):
+                 on_click=None, on_drag=None):
         """``on_click`` makes the overlay accept button presses.
 
         Without it the window is fully click-through. With it, the clickable
@@ -92,6 +92,9 @@ class Overlay:
         self.width = width
         self.height = height
         self._on_click = on_click
+        self._on_drag = on_drag
+        self._drag_origin = None
+        self._drag_moved = False
         self._input_radius = None
         self.win = Gtk.Window(type=Gtk.WindowType.POPUP)
         self.win.set_name(name)
@@ -115,8 +118,13 @@ class Overlay:
         self.image = Gtk.Image()
         self.win.add(self.image)
         if on_click is not None:
-            self.win.add_events(Gdk.EventMask.BUTTON_PRESS_MASK)
+            self.win.add_events(Gdk.EventMask.BUTTON_PRESS_MASK
+                                | Gdk.EventMask.BUTTON_RELEASE_MASK
+                                | Gdk.EventMask.POINTER_MOTION_MASK)
             self.win.connect("button-press-event", self._handle_click)
+            if on_drag is not None:
+                self.win.connect("motion-notify-event", self._handle_drag)
+                self.win.connect("button-release-event", self._handle_release)
         self.win.connect("realize", self._on_realize)
         # GDK rewrites the input shape while mapping the window, so a shape set
         # during "realize" is silently discarded. It has to be (re)applied once
@@ -142,7 +150,31 @@ class Overlay:
         return False
 
     def _handle_click(self, _widget, event):
+        if self._on_drag is not None and event.button == 1:
+            self._drag_origin = (event.x_root, event.y_root)
+            self._drag_moved = False
+            return True
         if self._on_click is not None:
+            self._on_click(event)
+        return True
+
+    def _handle_drag(self, _widget, event):
+        if self._drag_origin is None:
+            return False
+        x, y = self._drag_origin
+        dx, dy = event.x_root - x, event.y_root - y
+        if self._drag_moved or dx * dx + dy * dy > 9:
+            self._drag_moved = True
+            self._on_drag(dx, dy)
+            self._drag_origin = (event.x_root, event.y_root)
+        return True
+
+    def _handle_release(self, _widget, event):
+        if event.button != 1 or self._drag_origin is None:
+            return False
+        self._handle_drag(_widget, event)
+        self._drag_origin = None
+        if not self._drag_moved:
             self._on_click(event)
         return True
 

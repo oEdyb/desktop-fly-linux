@@ -34,6 +34,7 @@ class BrainSignals:
     sugar_smell: float = 0.0  # odour concentration at the fly, 0..1
     sugar_contact: bool = False  # standing on a drop (contact chemoreception)
     satiety: float = 0.0  # 0 hungry .. 1 full; suppresses interest in food
+    feeding_output: bool | None = None
 
 
 class SignalBuilder:

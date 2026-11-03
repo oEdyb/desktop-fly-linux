@@ -79,18 +79,25 @@ def main(argv: list[str] | None = None) -> int:
                         help="circuit invariants (GF silence, loom latency, siesta)")
     parser.add_argument("--behaviortest", action="store_true",
                         help="21 end-to-end checks (17 upstream + 4 sugar)")
+    parser.add_argument("--sensorytest", action="store_true", help="whole-brain taste and odor probes with timing, as JSON")
     parser.add_argument("--snapshot", metavar="PNG", help="offscreen fly render")
     parser.add_argument("--brainshot", metavar="PNG", help="offscreen brain render")
     parser.add_argument("--monitor", type=int, default=None,
                         help="index of the monitor to live on (see --list-monitors)")
     parser.add_argument("--list-monitors", action="store_true")
     parser.add_argument("--no-brain", action="store_true", help="start with the brain window hidden")
+    parser.add_argument("--sensory-data", help="prepared whole-brain model directory")
+    parser.add_argument("--legacy-sugar", action="store_true", help="use the original modeled food approach and contact feeding")
     parser.add_argument("--sugar-modifier", default="ctrl",
                         choices=["ctrl", "shift", "alt", "super", "none"],
                         help="modifier held with right-click to leave sugar (default: ctrl)")
     parser.add_argument("--seed", type=int, default=None, help="seed the simulation for reproducibility")
     parser.add_argument("--no-seed", action="store_true", help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
+
+    if args.sensorytest:
+        from .tests.sensorytest import run
+        return run(args.sensory_data, args.seed if args.seed is not None else 42)
 
     if args.simtest:
         from .tests.simtest import run
@@ -112,8 +119,16 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     from .app import DesktopFly
+    from .simcore.sensory import DEFAULT_DATA
+    sensory_data = None if args.legacy_sugar else args.sensory_data
+    if sensory_data is None and not args.legacy_sugar and (DEFAULT_DATA / "manifest.json").exists():
+        sensory_data = DEFAULT_DATA
+    if sensory_data is not None:
+        import importlib.util
+        if importlib.util.find_spec("numba") is None:
+            parser.error("whole-brain senses need numba; run ./tools/setup-senses.sh")
     app = DesktopFly(monitor_index=args.monitor, show_brain=not args.no_brain,
-                     seed=args.seed, sugar_modifier=args.sugar_modifier)
+                     seed=args.seed, sugar_modifier=args.sugar_modifier, sensory_data=sensory_data)
     print(f"desktopfly: {app.data_info}", flush=True)
     print(f"living on monitor [{app.monitor_index}] {app.monitor['name']}; "
           f"quit from the 🪰 tray menu or with Ctrl-C", flush=True)
@@ -122,6 +137,10 @@ def main(argv: list[str] | None = None) -> int:
     if getattr(app.sugar_grab, "error", None):
         print(f"warning: {app.sugar_grab.error}", flush=True)
     print(f"sugar: {combo} to leave a drop (or the tray menu)", flush=True)
+    if app.sensory:
+        print("whole-brain taste/odor enabled; odor is a neural readout, not steering", flush=True)
+    elif not args.legacy_sugar:
+        print("legacy sugar mode; run ./tools/setup-senses.sh for whole-brain taste and odor", flush=True)
     if not app.tray.available:
         print("note: no AppIndicator tray available — quit with Ctrl-C", flush=True)
     try:

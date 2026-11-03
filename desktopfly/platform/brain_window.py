@@ -21,9 +21,11 @@ class BrainWindow:
     WIDTH = 340
     HEIGHT = 546
 
-    def __init__(self, renderer, sim, on_stimulate=None, on_close=None):
+    def __init__(self, renderer, sim, on_stimulate=None, on_close=None,
+                 sensory=None, on_add_item=None, on_reset_environment=None):
         self.renderer = renderer
         self.sim = sim
+        self.sensory = sensory
         self.on_stimulate = on_stimulate
         # The brain window is the app's only real window, so its close button is
         # the obvious way to quit -- "Show/Hide Brain" in the tray is the way to
@@ -108,6 +110,26 @@ class BrainWindow:
             button.connect("clicked", lambda _button, role=role: self.stimulate_group(role))
             content.pack_start(button, False, False, 0)
             self.group_buttons[role] = button
+        self.item_buttons = {}
+        if sensory:
+            self.HEIGHT = 760
+            palette = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=4)
+            for kind, name in (("food", "Food"), ("bitter", "Bitter"), ("odor", "Smell")):
+                button = Gtk.Button(label=name)
+                button.connect("clicked", lambda _b, kind=kind: on_add_item(kind))
+                palette.pack_start(button, True, True, 0)
+                self.item_buttons[kind] = button
+            content.pack_start(palette, False, False, 2)
+            self.reset_environment = Gtk.Button(label="Reset environment")
+            self.reset_environment.connect("clicked", lambda _b: on_reset_environment())
+            content.pack_start(self.reset_environment, False, False, 0)
+            self.sensory_label = Gtk.Label()
+            self.sensory_label.set_line_wrap(True)
+            content.pack_start(self.sensory_label, False, False, 2)
+            self.odor_label = Gtk.Label()
+            self.odor_label.set_markup('<span foreground="#e8eded">Odor: neural response only · no steering</span>')
+            content.pack_start(self.odor_label, False, False, 2)
+            self.win.set_default_size(self.WIDTH, self.HEIGHT)
         self.win.add(content)
         self._label_timer = None
         self._visible = False
@@ -218,6 +240,15 @@ class BrainWindow:
         for role, (name, picked) in self.groups.items():
             rate = float(self.sim.neuron_rates[picked].mean()) if len(picked) else 0.0
             self.group_buttons[role].set_label(f"{name} · {len(picked)} neurons · {rate:.0f} Hz")
+        if self.sensory:
+            rates = self.sensory.rates
+            status = "FEEDING" if self.sensory.feeding else "quiet"
+            text = (f"Senses · {self.sensory.info['neurons']:,} neurons · {self.sensory.speed:.2f}×\n"
+                    f"Sugar GRNs {rates['sugar']:.0f} · Bitter GRNs {rates['bitter']:.0f} Hz\n"
+                    f"MN9 {rates['mn9']:.0f} Hz · {status}\n"
+                    f"ORN_DM1 {rates['orn']:.0f} → DM1_lPN {rates['pn']:.0f} Hz")
+            self.sensory_label.set_markup('<span foreground="#e8eded">'
+                                          + GLib.markup_escape_text(self.sensory.error or text) + '</span>')
         self.renderer.drain_spikes()
         rgba = self.renderer.render(dt)
         h, w = rgba.shape[:2]

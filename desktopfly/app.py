@@ -24,6 +24,7 @@ from .platform.environment import (
     circadian_activity,
     thermal_tempo,
 )
+from .platform.environment_item import EnvironmentItem
 from .platform.gtkcompat import GLib, Gtk
 from .platform.overlay import Overlay, monitors, pointer_position
 from .platform.taps import ButtonGrab, TapSense
@@ -35,6 +36,7 @@ from .simcore.data import load_brain_data
 from .simcore.lif import LIFSim, SpikeBus
 from .simcore.signals import BrainSignals, SignalBuilder, clampf
 from .world.sugar import SugarField, sense as sugar_sense
+from .world.environment import Environment
 
 FRAME_MS = 16
 AMBIENT_EVERY = 2  # ambient senses at ~30 Hz
@@ -99,7 +101,7 @@ class SugarView:
 
 class DesktopFly:
     def __init__(self, monitor_index: int | None = None, show_brain: bool = True,
-                 seed: int | None = None, sugar_modifier: str = "ctrl"):
+                 seed: int | None = None, sugar_modifier: str = "ctrl", sensory_data=None):
         self.monitors = monitors()
         if not self.monitors:
             raise RuntimeError("no monitors reported by GDK")
@@ -114,12 +116,20 @@ class DesktopFly:
             f"circuit {circuit.n}n/{len(circuit.edges)}e"
         )
         self.signal_builder = SignalBuilder()
+        self.sensory = None
+        if sensory_data is not None:
+            from .simcore.sensory_runtime import SensoryRuntime
+            self.sensory = SensoryRuntime(sensory_data, seed)
+            self.data_info += f" · whole-brain senses {self.sensory.info['neurons']}n"
 
         self.views: list[FlyView] = [FlyView(Fly(*self._random_start()))]
         self.paused = False
 
         self.brain_renderer = BrainRenderer(points, self.sim)
-        self.brain = BrainWindow(self.brain_renderer, self.sim, on_close=self.quit)
+        self.brain_renderer.sensory = self.sensory
+        self.brain = BrainWindow(self.brain_renderer, self.sim, on_close=self.quit,
+                                 sensory=self.sensory, on_add_item=self.add_item,
+                                 on_reset_environment=self.reset_environment)
         self.brain.place_bottom_right(self.monitor)
         if show_brain:
             self.brain.show()
@@ -132,6 +142,9 @@ class DesktopFly:
 
         self.sugar = SugarField()
         self.sugar_views: list[SugarView] = []
+        self.environment = Environment(self.sugar)
+        self.item_views = []
+        self.selected_kind = "food"
         self.sugar_modifier = sugar_modifier
         self.terrain = []
         self.typing_level = 0.0
@@ -186,6 +199,8 @@ class DesktopFly:
             "brain": ("Show/Hide Brain", lambda _i: self.brain.toggle()),
             "escape": ("Escape Test (loom)", lambda _i: self.escape_test()),
             "sugar": ("Leave Sugar at Cursor", lambda _i: self.drop_sugar_at_cursor()),
+            "bitter": ("Leave Bitter at Cursor", lambda _i: self.drop_item_at_cursor("bitter")),
+            "odor": ("Leave Odor at Cursor", lambda _i: self.drop_item_at_cursor("odor")),
             "clearsugar": ("Clear Sugar", lambda _i: self.clear_sugar()),
             "display": ("Move to Next Display", lambda _i: self.next_display()),
             "sep1": (None, None),
@@ -197,10 +212,14 @@ class DesktopFly:
         }
         tray = Tray("Desktop Fly", self.data_info, actions)
         tray.set_visible("display", len(self.monitors) > 1)
+        tray.set_visible("bitter", self.sensory is not None)
+        tray.set_visible("odor", self.sensory is not None)
         return tray
 
     def toggle_pause(self) -> None:
         self.paused = not self.paused
+        if self.paused and self.sensory:
+            self.sensory.pause()
         self._last_t = None
         self.tray.set_label("pause", "Resume" if self.paused else "Pause")
 
@@ -210,7 +229,10 @@ class DesktopFly:
     def drop_sugar(self, scene_x: float, scene_y: float) -> None:
         """Leave a drop of sugar at a point in scene coordinates."""
         drop = self.sugar.add(scene_x, scene_y)
-        self.sugar_views.append(SugarView(drop, self.monitor, on_click=self.remove_drop))
+        if self.sensory:
+            self.sugar_views.append(EnvironmentItem(drop, "food", self.monitor, self.remove_drop))
+        else:
+            self.sugar_views.append(SugarView(drop, self.monitor, on_click=self.remove_drop))
         # keep the flies above the drops they stand on
         for view in self.views:
             view.overlay.raise_()
@@ -219,15 +241,52 @@ class DesktopFly:
         px, py = pointer_position()
         self.drop_sugar(*self._scene_from_screen(px, py))
 
+    def add_item(self, kind):
+        self.selected_kind = kind
+        fly = self.views[0].fly
+        self.drop_item(kind, clampf(fly.pos_x + 80, -self.bounds[0] / 2 + 20,
+                                   self.bounds[0] / 2 - 20), fly.pos_y)
+
+    def drop_item(self, kind, x, y):
+        if kind == "food":
+            self.drop_sugar(x, y)
+            return
+        if not self.sensory:
+            return
+        source = self.environment.add(kind, x, y)
+        self.item_views.append(EnvironmentItem(source, kind, self.monitor, self.remove_drop))
+        self._sync_sugar_views()
+        for view in self.views:
+            view.overlay.raise_()
+
+    def drop_item_at_cursor(self, kind):
+        px, py = pointer_position()
+        self.drop_item(kind, *self._scene_from_screen(px, py))
+
     def remove_drop(self, drop) -> None:
         """Clicking a drop wipes it up."""
         if drop in self.sugar.drops:
             self.sugar.drops.remove(drop)
+        if drop in self.environment.sources:
+            self.environment.sources.remove(drop)
         self._sync_sugar_views()
 
     def clear_sugar(self) -> None:
         self.sugar.clear()
         self._sync_sugar_views()
+
+    def clear_environment(self):
+        self.sugar.clear()
+        self.environment.sources.clear()
+        self._sync_sugar_views()
+
+    def reset_environment(self):
+        self.clear_environment()
+        for view in self.views:
+            view.fly.satiety = 0.0
+        if self.sensory:
+            self.sensory.sugar = self.sensory.bitter = self.sensory.odor = 0.0
+            self.sensory.reset()
 
     def _sync_sugar_views(self) -> None:
         """Retire the windows of drops that have been eaten or cleared."""
@@ -240,6 +299,14 @@ class DesktopFly:
             else:
                 view.destroy()
         self.sugar_views = keep
+        live_items = {id(s) for s in self.environment.sources}
+        keep = []
+        for view in self.item_views:
+            if id(view.drop) in live_items:
+                keep.append(view)
+            else:
+                view.destroy()
+        self.item_views = keep
 
     def add_fly(self) -> None:
         self.views.append(FlyView(Fly(*self._random_start())))
@@ -258,7 +325,7 @@ class DesktopFly:
         self.monitor_index = (self.monitor_index + 1) % len(self.monitors)
         w, h = self.bounds
         self.terrain = []
-        self.clear_sugar()  # drops are placed in the old monitor's scene frame
+        self.clear_environment()
         for view in self.views:
             view.fly.ledge = None
             view.fly.pos_x = clampf(view.fly.pos_x, -w / 2 + 40, w / 2 - 40)
@@ -266,6 +333,8 @@ class DesktopFly:
         self.brain.place_bottom_right(self.monitor)
 
     def quit(self) -> None:
+        if self.sensory:
+            self.sensory.close()
         Gtk.main_quit()
 
     # ------------------------------------------------------------ senses
@@ -363,16 +432,19 @@ class DesktopFly:
         # left click anywhere = a tap on the fly's substrate -> sensory pathway;
         # right click (with the configured modifier) leaves a drop of sugar
         for click in self.sugar_grab.poll():
-            self.drop_sugar(*self._scene_from_screen(click.x, click.y))
+            self.drop_item(self.selected_kind, *self._scene_from_screen(click.x, click.y))
         for click in self.tap_sense.poll():
             if self.brain.contains_screen_point(click.x, click.y):
+                continue
+            if self.sensory and any(view.contains(click.x, click.y)
+                                    for view in self.sugar_views + self.item_views):
                 continue
             if click.button == 1 and self.views:
                 self._inject_tap(self._scene_from_screen(click.x, click.y), self.views[0].fly)
             elif click.button == 3 and not self.sugar_grab.available \
                     and click.has_modifier(self.sugar_modifier):
                 # no grab (e.g. --sugar-modifier none): fall back to raw events
-                self.drop_sugar(*self._scene_from_screen(click.x, click.y))
+                self.drop_item(self.selected_kind, *self._scene_from_screen(click.x, click.y))
 
         signals = None
         if self.views:
@@ -395,6 +467,13 @@ class DesktopFly:
             self.sim.sugar_l = smelled.steer_left
             self.sim.sugar_r = smelled.steer_right
             self.sim.sugar_appetite = smelled.appetite
+            if self.sensory:
+                self.sim.sugar_l = self.sim.sugar_r = self.sim.sugar_appetite = 0.0
+                grounded = first.state not in (State.FLYING, State.SLEEPING)
+                self.sensory.sugar = float(grounded and smelled.contact is not None)
+                bitter, odor = self.environment.sense(first.pos_x, first.pos_y)
+                self.sensory.bitter = bitter if grounded else 0.0
+                self.sensory.odor = odor
             self._smelled = smelled
             # Circadian/sleep neuromodulation, compressed: the LIF neurons sit
             # just below threshold, so a raw multiplier silences them outright —
@@ -409,6 +488,8 @@ class DesktopFly:
             steps = min(50, int(self._ms_accumulator))
             self._ms_accumulator -= steps
             self.sim.step(steps)
+            if self.sensory:
+                self.sensory.step(steps)
 
             signals = self.signal_builder.make(self.sim, dt)
             signals.tempo = self.tempo
@@ -416,6 +497,8 @@ class DesktopFly:
             signals.sugar_smell = self._smelled.smell
             signals.sugar_contact = self._smelled.contact is not None
             signals.satiety = first.satiety
+            if self.sensory:
+                signals.feeding_output = self.sensory.feeding and self.sensory.error is None
 
         mon = self.monitor
         for view in self.views:

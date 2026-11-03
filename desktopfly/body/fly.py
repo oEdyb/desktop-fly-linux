@@ -297,20 +297,17 @@ class Fly:
             self.speed = rnd(110, 155)
             self.dart_timer = rnd(0.4, 0.9)
             self.dart_cooldown = 1.2
-        # Sugar: contact chemoreception -> feeding. Modeled outright — the
-        # circuit has no gustatory pathway to derive it from (verified: its 16
-        # sensory partners are all mechanosensory, and FlyWire's 334 gustatory
-        # neurons make zero synapses onto it). Approach, by contrast, is real:
-        # the odour bearing is injected onto DNa01/DNa02 and DNp09 in the sim.
+        feeding_allowed = s.feeding_output if s.feeding_output is not None else True
         if self.state is State.FEEDING:
             self.satiety = min(1.0, self.satiety + FEED_SATIETY_RATE * dt)
             self.speed = 0.0
-            done = (not s.sugar_contact) or self.satiety >= 0.98
+            done = (not s.sugar_contact) or not feeding_allowed or self.satiety >= 0.98
             if (done or s.nervous > 0.35) and self.state_age > 0.4:
                 self._set_state(State.GROOMING)  # flies groom after a meal
             return
         if (
             s.sugar_contact
+            and feeding_allowed
             and self.satiety < FEED_HUNGER_THRESHOLD
             and self.state_age > 0.4
             and self.state in (State.WALKING, State.IDLE, State.GROOMING)
