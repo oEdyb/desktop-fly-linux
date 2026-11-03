@@ -111,6 +111,9 @@ expand into synaptic updates only when due. No graph pruning or integration
 steps are skipped for speed. Equations use exact linear integration, 0.1 ms
 steps, 20 ms membrane tau, 5 ms synaptic tau, 2.2 ms refractory period, 1.8 ms
 delay, 0.275 mV per signed synapse and the paper's 68.75 mV Poisson input kicks.
+All three configured receptor groups retain zero refractory time, including
+when their current stimulus is zero. The paper removes refractoriness only
+for its configured Poisson targets; this runtime keeps its input groups fixed.
 
 Go for the full model's taste experiment. Strong odor activity costs
 **2.85–4.9 wall seconds per fly second**, depending on concurrent desktop load.
@@ -129,7 +132,7 @@ across updates. Neural time is slower under expensive odor activity.
   DM1_lPN without a steering command.
 - An independent seed 1234 also passed sugar activation, bitter suppression
   and ORN/PN response checks. This is numerical testing, not a new animal trial.
-- 13 unit tests passed, including the tiny solver and motor-permission checks.
+- 15 unit tests passed, including the tiny solver and motor-permission checks.
   Existing sim invariants and all 21 behavior checks passed. Wheel build passed.
 - Invisible KWin/XWayland lab: Food button placement; drag of each item; sugar
   contact → MN9 → extended proboscis; bitter → loss of feeding; walk, moonwalk,
@@ -149,12 +152,23 @@ Brian2 is only needed for the optional parity test:
 `uv pip install --python .venv-brain/bin/python brian2==2.11.0`.
 Without Brian2/Numba, the small default suite skips that parity check explicitly.
 
+Claude Opus independently re-ran all scientific and behavior checks on the
+implementation commit and found no blocking issue. The optional dependency
+fallback was corrected afterward: auto-detected caches fall back to legacy
+mode when Numba is unavailable; an explicit `--sensory-data` request still
+fails with setup instructions. Worker errors now remain resettable, and item
+removal uses identity so coincident sources cannot remove one another.
+
 GPU timing uses `tools/benchmark_gpu.py`, Eon's `code/` directory at commit
 `a3db62f9436074e485c0278290c2164ed6150808`, and CUDA PyTorch 2.14.1+cu130.
 The app's dependency pins are in `sensory-data/requirements.txt`.
 
 Evidence: [machine-readable probes and desktop checks](environment-verification.json).
-Screenshots: [feeding](img/environment-feeding.png),
+The magnified views use 3× renderer zoom in the invisible desktop to make the
+proboscis easier to inspect; neural and body state are unchanged.
+Screenshots: [magnified feeding](img/environment-feeding-detail.png),
+[magnified bitter suppression](img/environment-bitter-detail.png),
+[feeding](img/environment-feeding.png),
 [bitter suppression](img/environment-bitter.png), [odor response](img/environment-odor.png).
 
 ## Sources

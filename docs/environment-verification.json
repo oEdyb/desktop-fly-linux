@@ -1417,5 +1417,128 @@
       "wall_seconds": 5.9117158009903505,
       "allocated_vram_mb": 152.698368
     }
-  ]
+  ],
+  "after_review": {
+    "probe": {
+      "ok": true,
+      "seed": 42,
+      "results": [
+        {
+          "neurons": 138639,
+          "connections": 15091983,
+          "fly_seconds": 1.0001,
+          "compute_seconds": 0.19477043900405988,
+          "input": {
+            "sugar": 0,
+            "bitter": 0,
+            "odor": 0
+          },
+          "rates_hz": {
+            "sugar": 0.0,
+            "bitter": 0.0,
+            "mn9": 0.0,
+            "orn": 0.0,
+            "pn": 0.0
+          },
+          "feeding": false,
+          "mn9_spikes": 0,
+          "condition": "rest",
+          "wall_seconds": 0.005902504024561495
+        },
+        {
+          "neurons": 138639,
+          "connections": 15091983,
+          "fly_seconds": 1.0001,
+          "compute_seconds": 0.27701513399370015,
+          "input": {
+            "sugar": 1,
+            "bitter": 0,
+            "odor": 0
+          },
+          "rates_hz": {
+            "sugar": 99.17615534793919,
+            "bitter": 0.0,
+            "mn9": 65.98413561455631,
+            "orn": 0.0,
+            "pn": 0.0
+          },
+          "feeding": true,
+          "mn9_spikes": 66,
+          "condition": "sugar",
+          "wall_seconds": 0.27738286298699677
+        },
+        {
+          "neurons": 138639,
+          "connections": 15091983,
+          "fly_seconds": 1.0001,
+          "compute_seconds": 0.16674672503722832,
+          "input": {
+            "sugar": 1,
+            "bitter": 1,
+            "odor": 0
+          },
+          "rates_hz": {
+            "sugar": 99.17615534793919,
+            "bitter": 189.10453411353524,
+            "mn9": 0.0,
+            "orn": 0.0,
+            "pn": 0.0
+          },
+          "feeding": false,
+          "mn9_spikes": 0,
+          "condition": "sugar_bitter",
+          "wall_seconds": 0.1671734339906834
+        },
+        {
+          "neurons": 138639,
+          "connections": 15091983,
+          "fly_seconds": 1.0001,
+          "compute_seconds": 0.23795329098356888,
+          "input": {
+            "sugar": 1,
+            "bitter": 0,
+            "odor": 0
+          },
+          "rates_hz": {
+            "sugar": 99.17615534793919,
+            "bitter": 0.0,
+            "mn9": 0.0,
+            "orn": 0.0,
+            "pn": 0.0
+          },
+          "feeding": false,
+          "mn9_spikes": 0,
+          "condition": "mn9_inputs_cut",
+          "wall_seconds": 0.23840488900896162
+        },
+        {
+          "neurons": 138639,
+          "connections": 15091983,
+          "fly_seconds": 1.0001,
+          "compute_seconds": 3.707578293979168,
+          "input": {
+            "sugar": 0,
+            "bitter": 0,
+            "odor": 1
+          },
+          "rates_hz": {
+            "sugar": 0.0,
+            "bitter": 0.0,
+            "mn9": 0.0,
+            "orn": 100.22590295998896,
+            "pn": 393.40541461102896
+          },
+          "feeding": false,
+          "mn9_spikes": 0,
+          "condition": "odor",
+          "wall_seconds": 3.708058083022479
+        }
+      ]
+    },
+    "unit_tests": 15,
+    "optional_numba_fallback": "passed",
+    "coincident_item_identity": "passed",
+    "worker_error_reset": "passed",
+    "independent_review": "Claude Opus pass; no blockers; medium optional-dependency fallback corrected"
+  }
 }

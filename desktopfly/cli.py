@@ -126,7 +126,10 @@ def main(argv: list[str] | None = None) -> int:
     if sensory_data is not None:
         import importlib.util
         if importlib.util.find_spec("numba") is None:
-            parser.error("whole-brain senses need numba; run ./tools/setup-senses.sh")
+            if args.sensory_data:
+                parser.error("whole-brain senses need numba; run ./tools/setup-senses.sh")
+            print("warning: optional whole-brain cache found, but numba is unavailable; using legacy mode", file=sys.stderr)
+            sensory_data = None
     app = DesktopFly(monitor_index=args.monitor, show_brain=not args.no_brain,
                      seed=args.seed, sugar_modifier=args.sugar_modifier, sensory_data=sensory_data)
     print(f"desktopfly: {app.data_info}", flush=True)

@@ -53,8 +53,11 @@ class SensoryRuntime:
                 self._request = None
                 reset = self._reset
                 self._reset = False
+            if self.error and not reset:
+                continue
             if reset:
                 self.brain.reset()
+                self.error = None
                 self._last_finished = time.perf_counter()
                 self.neuron_rates = self.brain.neuron_rates.copy()
                 self.rates = self.brain.rates.copy()
@@ -78,7 +81,6 @@ class SensoryRuntime:
                 logger.exception("Whole-brain simulation failed")
                 self.error = str(error)
                 self.feeding = False
-                return
 
     def snapshot(self):
         return {**self._snapshot, "error": self.error}

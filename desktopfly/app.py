@@ -265,10 +265,8 @@ class DesktopFly:
 
     def remove_drop(self, drop) -> None:
         """Clicking a drop wipes it up."""
-        if drop in self.sugar.drops:
-            self.sugar.drops.remove(drop)
-        if drop in self.environment.sources:
-            self.environment.sources.remove(drop)
+        self.sugar.drops[:] = [item for item in self.sugar.drops if item is not drop]
+        self.environment.sources[:] = [item for item in self.environment.sources if item is not drop]
         self._sync_sugar_views()
 
     def clear_sugar(self) -> None:
